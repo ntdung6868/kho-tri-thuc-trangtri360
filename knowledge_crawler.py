@@ -66,6 +66,9 @@ MIN_CONTENT_LENGTH = 50  # Bỏ trang có nội dung quá ngắn (< 50 ký tự)
 # File dự phòng khi gửi webhook thất bại
 FALLBACK_FILE = "du_phong_data.json"
 
+# File lưu đầy đủ toàn bộ kho tri thức (luôn lưu, không phân biệt thành/thất bại)
+KHO_TRI_THUC_FILE = "kho_tri_thuc_day_du.json"
+
 
 # =============================================================================
 # 🧹 HÀM LÀM SẠCH MARKDOWN — Giữ text, bỏ URL/ảnh, giữ heading
@@ -459,11 +462,14 @@ async def main():
         print("\n⚠️ Không có nội dung nào đạt yêu cầu sau khi lọc.")
         return
 
-    # Bước 3: Đấy lên Google Sheets (fallback: lưu JSON)
-    thanh_cong = day_len_google_sheets(kho_du_lieu)
-    if not thanh_cong:
-        print("\n   ⚡ Chuyển sang phương án dự phòng: lưu file JSON...")
-        luu_du_phong(kho_du_lieu)
+    # Bước 3: Luôn lưu local JSON đầy đủ
+    print(f"\n{'='*60}")
+    print(f"💾 BƯỚC 3: Lưu kho tri thức local")
+    print(f"{'='*60}")
+    luu_du_phong(kho_du_lieu, KHO_TRI_THUC_FILE)
+
+    # Bước 4: Đẩy lên Google Sheets
+    day_len_google_sheets(kho_du_lieu)
 
     print(f"\n{'='*60}")
     print(f"🏁 HOÀN TẤT! Tổng: {len(kho_du_lieu)} tài liệu tri thức")
