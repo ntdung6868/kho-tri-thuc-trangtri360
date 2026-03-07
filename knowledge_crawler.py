@@ -90,6 +90,23 @@ CAC_CUM_RAC = [
     "Chưa có bình luận nào",
     "Mời bạn tham gia thảo luận",
     "Sản phẩm tương tự",
+    # --- Badge thống kê / USP section ---
+    "GIAO HÀNG NHANH CHÓNG",
+    "HỖ TRỢ 24/7",
+    "100% tùy chỉnh",
+    "CÓ SẴN MỌI LOẠI BIỂN BÁO",
+    "Theo nhu cầu của bạn",
+    "Trong vòng 10 ngày làm việc",
+    "trong vòng vài phút",
+    "Thông số thống kê",
+    "Đối tác của chúng tôi",
+    "QUY TRÌNH ĐẶT HÀNG",
+    "Bạn có thắc mắc gì? Liên hệ chúng tôi",
+    # --- Section điều hướng sidebar ---
+    "Tiếp nhận yêu cầu",
+    "Khảo sát thực tế",
+    "Ghi nhận thông tin của khách hàng",
+    "Đo đạc hiện trạng và tư vấn trực tiếp",
 ]
 
 
@@ -137,7 +154,37 @@ def lam_sach_markdown(raw_md: str) -> str:
             lines.append(stripped)
     text = "\n".join(lines)
 
+    # 10. Xóa các block heading+text bị lặp đôi (stats section render 2 lần)
+    text = _xoa_block_lap_doi(text)
+
     return text.strip()
+
+
+def _xoa_block_lap_doi(text: str) -> str:
+    """
+    Xóa các cặp heading+dòng kế tiếp bị lặp đôi.
+    Ví dụ: '## 10000+\\nĐơn hàng' xuất hiện 2 lần → giữ 1.
+    """
+    lines = text.split("\n")
+    result = []
+    seen_pairs: set = set()
+    i = 0
+    while i < len(lines):
+        current = lines[i]
+        stripped = current.strip()
+        if stripped.startswith("#"):
+            next_stripped = lines[i + 1].strip() if i + 1 < len(lines) else ""
+            pair_key = f"{stripped}||{next_stripped}"
+            if pair_key in seen_pairs:
+                # Bỏ qua block này (heading + nội dung đến heading tiếp)
+                i += 1
+                while i < len(lines) and not lines[i].strip().startswith("#"):
+                    i += 1
+                continue
+            seen_pairs.add(pair_key)
+        result.append(current)
+        i += 1
+    return "\n".join(result)
 
 
 # =============================================================================
@@ -241,6 +288,27 @@ def _tao_run_config() -> CrawlerRunConfig:
         ".product-thumbnails", ".product-gallery-slider",
         # Giá & form mua hàng
         ".price-wrapper", ".cart", ".quantity",
+        # --- Mở rộng: USP/Stats/Feature sections ---
+        # Các section thống kê & tính năng nổi bật (thường render 2 lần: sticky + main)
+        ".usp-section", ".usp-box", ".usp-item",
+        ".feature-box", ".feature-icon-box", ".features-section",
+        ".why-choose-us", ".why-us-section",
+        ".achievement-box", ".counter-box", ".counter-section", ".stats-section",
+        ".stat-item", ".number-counter",
+        ".icon-box-wrapper", ".elementor-icon-box",
+        # Header promo / announcement
+        ".header-bar", ".top-bar", ".announcement-bar", ".promo-bar",
+        # Sidebar & widget areas
+        ".widget-area", ".sidebar-area", ".wp-sidebar",
+        ".related-posts-section", ".related-posts-widget",
+        # WooCommerce upsell / cross-sell
+        ".upsells", ".cross-sells",
+        # Process / quy trình steps (thường là UI decorative)
+        ".process-steps", ".step-box", ".timeline-steps",
+        # Partner / logo section
+        ".partner-logos", ".client-logos", ".logo-slider",
+        # Social share buttons
+        ".social-share", ".share-buttons", ".addtoany_share",
     ])
 
     return CrawlerRunConfig(
